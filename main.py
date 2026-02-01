@@ -2,14 +2,11 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
-# Camera
-cap = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)  # use 0 if 1 fails
-
+cap = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)
 if not cap.isOpened():
     print("Cannot open camera")
     raise SystemExit
 
-# MediaPipe
 mp_hands = mp.solutions.hands
 mp_draw = mp.solutions.drawing_utils
 
@@ -21,6 +18,7 @@ hands = mp_hands.Hands(
     min_tracking_confidence=0.6,
 )
 
+canvas = None
 
 while True:
     ok, frame = cap.read()
@@ -38,15 +36,17 @@ while True:
 
     if res.multi_hand_landmarks:
         hand_lms = res.multi_hand_landmarks[0]
-        mp_draw.draw_landmarks(
-            frame, hand_lms, mp_hands.HAND_CONNECTIONS
-        )
+        mp_draw.draw_landmarks(frame, hand_lms, mp_hands.HAND_CONNECTIONS)
 
+    # overlay (nothing on canvas yet)
+    output = frame.copy()
+    gray = cv2.cvtColor(canvas, cv2.COLOR_BGR2GRAY)
+    mask = gray > 0
+    output[mask] = canvas[mask]
 
-    cv2.imshow("Air Draw", frame)
+    cv2.imshow("Air Draw", output)
 
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord("q"):
+    if (cv2.waitKey(1) & 0xFF) == ord("q"):
         break
 
 cap.release()

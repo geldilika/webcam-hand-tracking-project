@@ -8,8 +8,6 @@ if not cap.isOpened():
     raise SystemExit
 
 mp_hands = mp.solutions.hands
-mp_draw = mp.solutions.drawing_utils
-
 hands = mp_hands.Hands(
     static_image_mode=False,
     max_num_hands=1,
@@ -19,6 +17,10 @@ hands = mp_hands.Hands(
 )
 
 canvas = None
+prev_point = None
+
+BRUSH = 12
+COLOR = (255, 255, 255)  # white ink
 
 while True:
     ok, frame = cap.read()
@@ -35,10 +37,23 @@ while True:
     res = hands.process(rgb)
 
     if res.multi_hand_landmarks:
-        hand_lms = res.multi_hand_landmarks[0]
-        mp_draw.draw_landmarks(frame, hand_lms, mp_hands.HAND_CONNECTIONS)
+        lm = res.multi_hand_landmarks[0].landmark
 
-    # overlay (nothing on canvas yet)
+        x = int(lm[8].x * w)
+        y = int(lm[8].y * h)
+        x = max(0, min(w - 1, x))
+        y = max(0, min(h - 1, y))
+
+        if prev_point is None:
+            prev_point = (x, y)
+
+            cv2.line(canvas, prev_point, (x, y), COLOR, BRUSH)
+            prev_point = (x, y)
+        else:
+            prev_point = None
+    else:
+        prev_point = None
+
     output = frame.copy()
     gray = cv2.cvtColor(canvas, cv2.COLOR_BGR2GRAY)
     mask = gray > 0

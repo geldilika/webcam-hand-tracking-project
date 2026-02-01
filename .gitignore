@@ -1,0 +1,7 @@
+venv/
+.venv/
+__pycache__/
+.DS_Store
+canvas.png
+roi.png
+ocr_input.png

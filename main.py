@@ -22,6 +22,9 @@ prev_point = None
 BRUSH = 12
 COLOR = (255, 255, 255)  # white ink
 
+def finger_up(lm, tip, pip):
+    return lm[tip].y < lm[pip].y
+
 while True:
     ok, frame = cap.read()
     if not ok or frame is None:
@@ -39,13 +42,19 @@ while True:
     if res.multi_hand_landmarks:
         lm = res.multi_hand_landmarks[0].landmark
 
-        x = int(lm[8].x * w)
-        y = int(lm[8].y * h)
-        x = max(0, min(w - 1, x))
-        y = max(0, min(h - 1, y))
+        index_up = finger_up(lm, 8, 6)
+        middle_up = finger_up(lm, 12, 10)
 
-        if prev_point is None:
-            prev_point = (x, y)
+        draw_mode = index_up and (not middle_up)
+
+        if draw_mode:
+            x = int(lm[8].x * w)
+            y = int(lm[8].y * h)
+            x = max(0, min(w - 1, x))
+            y = max(0, min(h - 1, y))
+
+            if prev_point is None:
+                prev_point = (x, y)
 
             cv2.line(canvas, prev_point, (x, y), COLOR, BRUSH)
             prev_point = (x, y)
@@ -54,6 +63,7 @@ while True:
     else:
         prev_point = None
 
+    # show camera + ink (your face stays visible)
     output = frame.copy()
     gray = cv2.cvtColor(canvas, cv2.COLOR_BGR2GRAY)
     mask = gray > 0
